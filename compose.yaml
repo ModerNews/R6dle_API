@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: 3Q7Lky*6MQME
+    ports:
+        - "5432:5432"
+    volumes:
+        - ./postgres-data:/var/lib/postgresql/data
+        - ./data-dump.sql:/docker-entrypoint-initdb.d/001-data-dump.sql
+        - ./extension-dump.sql:/docker-entrypoint-initdb.d/002-extension-dump.sql
+    restart: always
+
+  rest-api:
+    build: .
+    ports:
+        - "8000:8000"
+    depends_on:
+        - db
+    environment:
+        POSTGRES_URL: postgres://postgres:3Q7Lky*6MQME@db:5432/railway
