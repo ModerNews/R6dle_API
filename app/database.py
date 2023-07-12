@@ -27,4 +27,23 @@ class Database:
         cursor.execute("INSERT INTO results VALUES (%s, %s) "
                        "ON CONFLICT (date) DO UPDATE SET responses = excluded.responses", (date, json.dumps(results)))
         self.connector.commit()
+        return
 
+    def add_new_user(self, token):
+        cursor = self.connector.cursor()
+        cursor.execute("INSERT INTO users (token) VALUES (%s)", (token,))
+        self.connector.commit()
+        return
+
+    def get_user(self, token):
+        cursor = self.connector.cursor()
+        cursor.execute("SELECT * FROM users WHERE token = %s", (token,))
+        return cursor.fetchone()
+
+    def update_user(self, user_data):
+        cursor = self.connector.cursor()
+        cursor.execute("UPDATE users SET max_streak = %s, current_streak = %s, total_solves = %s, last_solve = %s WHERE token = %s", (
+            user_data[2], user_data[3], user_data[4], user_data[5], user_data[1]
+        ))
+        self.connector.commit()
+        return

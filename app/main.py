@@ -10,7 +10,7 @@ from random import choice
 
 import requests
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,9 +24,9 @@ router = APIRouter()
 
 
 @router.get('/token')
-async def token():
+async def token(request:Request, background_tasks: BackgroundTasks):
     """
-    Generates a token for the user identification
+    Generates a token for the user identification, and registers new entry in the database
 
     So, this isn't a safe solution, as it enables session hijacking and spoofing,
     lets one user report multiple times by simply changing the token, etc.
@@ -34,7 +34,19 @@ async def token():
 
     :return: New identification token
     """
-    return {"token": secrets.token_urlsafe(64)}
+    token = secrets.token_urlsafe(64)
+    background_tasks.add_task(register_user, token, request)
+    return {"token": token}
+
+
+async def register_user(token, request):
+    """
+    Registers new user in the database
+
+    :param token: user identification token
+    :return:
+    """
+    request.app.db.add_new_user(token)
 
 
 @router.get("/")
@@ -42,7 +54,7 @@ async def root():
     return {}
 
 
-@router.get("/stats")
+@router.get("/stats/global")
 async def daily_stats(request: Request, date: Optional[datetime.date] = None):
     """
     Gets the daily stats counter
@@ -52,6 +64,14 @@ async def daily_stats(request: Request, date: Optional[datetime.date] = None):
     :return:
     """
     return {"message": request.app.db.get_daily_results()[1] if not date else request.app.db.get_daily_results(date.strftime("%Y-%m-%d"))[1]}
+
+
+@router.get("/stats/user")
+async def user_stats(request: Request, token: Annotated[str, Depends(oauth_2_scheme)]):
+    current_user_stats = request.app.db.get_user(token)
+    return {"message": {"max_streak": current_user_stats[2],
+                        "current_streak": current_user_stats[3],
+                        "total_solves": current_user_stats[4]} if current_user_stats else "User not found"}
 
 
 @router.patch("/stats")
@@ -67,12 +87,37 @@ async def daily_stats_setter(request: Request, solves: str, token: Annotated[str
     try:
         current_stats = request.app.db.get_daily_results()[1]
         current_stats[solves] += 1
-    except TypeError:  # None stats available
+    except TypeError:  # If none stats available
         current_stats = {solves: 1}
-    finally:
-        request.app.db.update_daily_results(current_stats)
-        return {"message": "OK"}
+    except KeyError:  # If the number of guesses is not in the database
+        current_stats[solves] = 1
 
+    # TODO custom error, so it doesn't flag other TypeErrors falsely
+    try:
+        current_user_stats = list(request.app.db.get_user(token))
+    except TypeError:  # If none stats available
+        request.app.db.add_new_user(token)
+        current_user_stats = list(request.app.db.get_user(token))
+
+
+    current_user_stats = caculate_updated_user_stats(current_user_stats)
+
+    request.app.db.update_user(current_user_stats)
+    request.app.db.update_daily_results(current_stats)
+    return {"message": "OK"}
+
+def caculate_updated_user_stats(current_user_stats):
+    current_user_stats[4] += 1
+    if current_user_stats[5] == datetime.datetime.utcnow().date() - datetime.timedelta(days=1):
+        current_user_stats[3] += 1
+    else:
+        current_user_stats[3] = 1
+
+    if current_user_stats[3] > current_user_stats[2]:
+        current_user_stats[2] = current_user_stats[3]
+
+    current_user_stats[5] = datetime.datetime.utcnow().date().strftime("%Y-%m-%d")
+    return current_user_stats
 
 def get_new_daily_op():
     """

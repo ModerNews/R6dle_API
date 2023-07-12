@@ -9,14 +9,17 @@ and the Bearer token is **purely for user identification, it does not provide an
 ### GET `/token`
 Generates url safe token for user identification.
 
-### GET `/stats`
+### GET `/stats/global`
 Returns global statistics for the daily operator in R6dle.  
 **Query Parameters:**
 - `date` - date in format `YYYY-MM-DD` (default: today)
 
+### GET `/stats/user`
+Returns user statistics for the in R6dle - `max_streak, current_streak, total_solves`.
+
 ### PATCH `/stats`
 **Requires token**  
-Updates statistics with new guess, as provided.  
+Updates statistics with new guess, as provided (both user and global).  
 **Query Parameters:**
 - `solves` - number of guesses that it took user to solve the daily operator
 
