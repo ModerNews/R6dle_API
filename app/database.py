@@ -21,7 +21,7 @@ class Database:
         print(data)
         try:
             assert data is not None
-            return [data[0], json.loads(data[1])]
+            return [data[0], {key: value for key, value in sorted(json.loads(data[1]).items(), key=lambda x: int(x[0]))}]
         except AssertionError:
             return [date, {}]
 
@@ -44,6 +44,7 @@ class Database:
         cursor.execute("SELECT * FROM users WHERE token = %s", (token,))
         return cursor.fetchone()
 
+    # TODO user can send update more than once a day (and shouldn't)
     def update_user(self, user_data):
         cursor = self.connector.cursor()
         cursor.execute("UPDATE users SET max_streak = %s, current_streak = %s, total_solves = %s, last_solve = %s WHERE token = %s", (
