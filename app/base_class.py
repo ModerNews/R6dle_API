@@ -30,7 +30,7 @@ class App(FastAPI):
         :return:
         """
         origins = [
-            "https://rwlodarczyk.github.io",
+            "https://rwlodarczyk.github.io", "*r6dle.tech", "*"
         ]
 
         self.add_middleware(

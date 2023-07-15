@@ -19,7 +19,11 @@ class Database:
         cursor.execute("SELECT * FROM results WHERE date = %s", (date,))
         data = cursor.fetchone()
         print(data)
-        return [data[0], json.loads(data[1])]
+        try:
+            assert data[0] is not None
+            return [data[0], json.loads(data[1])]
+        except AssertionError:
+            return [date.strftime("%Y-%m-%d"), {}]
 
     def update_daily_results(self, results):
         cursor = self.connector.cursor()
