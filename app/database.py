@@ -20,7 +20,7 @@ class Database:
         data = cursor.fetchone()
         print(data)
         try:
-            assert data[0] is not None
+            assert data is not None
             return [data[0], json.loads(data[1])]
         except AssertionError:
             return [date.strftime("%Y-%m-%d"), {}]
