@@ -1,26 +1,23 @@
-http {
+server {
+    listen 80;
+    server_name r6dle.tech;
+    root /usr/share/nginx/html;
+    index index.html index.htm;
 
-    server {
-        listen 80;
-        server_name r6dle.tech;
+    # Additional redirect for api (subdomain should be used by default)
+    location /api {
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_pass http://rest-api:8000;
+    }
 
-        location / {
-            root /usr/share/nginx/html;
-            index index.html index.htm;
-            try_files $uri $uri/ /index.html;
-        }
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
 
-        error_page 500 502 503 504 /50x.html;
+    error_page 500 502 503 504 /50x.html;
 
-        location /50x.html {
-            root /usr/share/nginx/html;
-        }
-
-        # Additional redirect for api (subdomain should be used by default)
-        location /api {
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_pass http://rest-api:8000;
-        }
+    location = /50x.html {
+        root /usr/share/nginx/html;
     }
 }
