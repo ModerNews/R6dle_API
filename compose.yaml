@@ -12,16 +12,16 @@ services:
         - ./extension-dump.sql:/docker-entrypoint-initdb.d/002-extension-dump.sql
     restart: always
 
-  proxy:
-    image: nginx:latest
+  static-server:
+    build: ./build_files
     volumes:
-      - ./build_files/nginx.conf:/etc/nginx/nginx.conf
       - ./build_files/certs:/etc/ssl
     ports:
       - 80:80
       - 443:443
     depends_on:
       - rest-api
+      - db
 
   rest-api:
     build: .
