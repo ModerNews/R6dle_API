@@ -15,9 +15,14 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 COPY --from=build /app/r6dle/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY r6dle.tech /etc/nginx/sites-available/r6dle.tech
+COPY api.r6dle.tech /etc/nginx/sites-available/api.r6dle.tech
 
 EXPOSE 80
 EXPOSE 443
+
+RUN mkdir -p /etc/nginx/sites-enabled
+RUN ln -s /etc/nginx/sites-available/r6dle.tech /etc/nginx/sites-enabled/r6dle.tech && \
+    ln -s /etc/nginx/sites-available/api.r6dle.tech /etc/nginx/sites-enabled/api.r6dle.tech
 
 CMD ["nginx", "-g", "daemon off;"]

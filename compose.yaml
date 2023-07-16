@@ -13,7 +13,7 @@ services:
     restart: always
 
   static-server:
-    build: ./build_files
+    build: ./build_files/nginx
     volumes:
       - ./build_files/certs:/etc/ssl
     ports:
