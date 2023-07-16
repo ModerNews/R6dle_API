@@ -3,6 +3,7 @@ http {
     server {
         listen 80;
         server_name api.r6dle.tech *.api.r6dle.tech;
+        root /app/app;
 
         location / {
             proxy_pass http://rest-api:8000/;
